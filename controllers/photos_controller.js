@@ -17,20 +17,34 @@ module.exports = {
 
     get_photos_by_event_id: async (req, res) => {
         try {
-           // const photos = await Photo.findById(req.params.photo_id);
             let event_id = req.params.event_id;
-            let data = await Photo.find({
-                'event_id': {
-                    $in: event_id
-                }
-            });
-            
+    
+            const allPhotosAggregation = [
+                { $match: { event_id: event_id } },
+                { $addFields: { src: { $concat: [process.env.VITE_SERVER_URL, "/", "$photo_link"] }, name: "$_id" } }
+            ];
+    
+            const photosToDevelopAggregation = [
+                { $match: { event_id: event_id, is_selected: true } },
+                { $addFields: { src: { $concat: [process.env.VITE_SERVER_URL, "/", "$photo_link"] }, name: "$_id" } }
+            ];
+    
+            const disabledPhotosAggregation = [
+                { $match: { event_id: event_id, disabled: true } },
+                { $addFields: { src: { $concat: [process.env.VITE_SERVER_URL, "/", "$photo_link"] }, name: "$_id" } }
+            ];
+    
+            const allPhotos = await Photo.aggregate(allPhotosAggregation);
+            const photosToDevelop = await Photo.aggregate(photosToDevelopAggregation);
+            const disabledPhotos = await Photo.aggregate(disabledPhotosAggregation);
+    
             return res.status(200).json({
                 success: true,
                 message: 'photos to event: ' + event_id,
-                photos: data
+                allPhotos,
+                photosToDevelop,
+                disabledPhotos
             });
-
         } catch (error) {
             return res.status(500).json({
                 message: "error in getting photos by id",
@@ -38,16 +52,16 @@ module.exports = {
             });
         }
     },
-
+    
     upload_photos: async (req, res) => {
-        
+
         try {
             const event_id = req.params.event_id;
             let new_event_photos = [];
-            for(let i=0; i<req.files.length; i++) {
+            for (let i = 0; i < req.files.length; i++) {
                 new_event_photos[i] = req.files[i].path.replace('\\', '/');
             }
-            new_event_photos.map(async(photo) => {
+            new_event_photos.map(async (photo) => {
                 if (photo == null) {
                     throw new Error('Please Add Photos!');
                 }
@@ -118,7 +132,7 @@ module.exports = {
 
             const photo_id = req.params.photo_id;
             console.log(photo_id);
-            
+
             await Photo.findByIdAndDelete(photo_id);
             return res.status(200).json({
                 success: true,
@@ -139,11 +153,10 @@ module.exports = {
         try {
             const photo_id = req.body.photo_id;
             const changeto = req.body.changeto;
-            console.log(photo_id + ' ' + changeto);
             await Photo.findByIdAndUpdate(photo_id, { disabled: changeto });
             res.status(200).json({
                 success: true,
-                message: 'photo updated successfully'
+                message: changeto ? "תמונה הוסתרה בהצלחה" : "תמונה שוחזרה בהצלחה",
             })
         } catch (error) {
             return res.status(500).json({
