@@ -89,43 +89,6 @@ module.exports = {
 
     },
 
-    is_selected_change_to_true: async (req, res) => {
-        try {
-            const photo_id = req.params.photo_id;
-
-            await Photo.findByIdAndUpdate(photo_id, { is_selected: true });
-
-            return res.status(200).json({
-                success: true,
-                message: 'photo selected successfully',
-                is_selected: true
-            });
-        } catch (error) {
-            return res.status(500).json({
-                message: "error to select photo",
-                error: error.message
-            })
-        }
-    },
-    is_selected_change_to_false: async (req, res) => {
-        try {
-            const photo_id = req.params.photo_id;
-
-            await Photo.findByIdAndUpdate(photo_id, { is_selected: false });
-
-            return res.status(200).json({
-                success: true,
-                message: 'photo selected successfully',
-                is_selected: false
-            });
-        } catch (error) {
-            return res.status(500).json({
-                message: "error to select photo",
-                error: error.message
-            })
-        }
-    },
-
     delete_photo: async (req, res) => {
 
         try {
@@ -148,16 +111,14 @@ module.exports = {
         }
     },
 
-    toggledisable: async (req, res) => {
+    toggleDisable: async (req, res) => {
 
         try {
-            const photo_id = req.body.photo_id;
-            const changeto = req.body.changeto;
-            await Photo.findByIdAndUpdate(photo_id, { disabled: changeto });
+            const {imageId, status} = req.body;
+            await Photo.findByIdAndUpdate(imageId, { disabled: status });
             res.status(200).json({
                 success: true,
-                message: changeto ? "תמונה הוסתרה בהצלחה" : "תמונה שוחזרה בהצלחה",
-            })
+                message: status ? "תמונה הוסתרה בהצלחה" : "תמונה שוחזרה בהצלחה",            })
         } catch (error) {
             return res.status(500).json({
                 message: "error in disable photo",
@@ -165,25 +126,21 @@ module.exports = {
             });
         }
     },
-    toggle_is_selected: async (req, res) => {
+    toggleSelected: async (req, res) => {
+
         try {
-            const photo_id = req.body.photo_id;
-            const changeto = req.body.changeto;
-
-            await Photo.findByIdAndUpdate(photo_id, { is_selected: changeto });
-
-            return res.status(200).json({
+            const {imageId, status} = req.body;
+            await Photo.findByIdAndUpdate(imageId, { is_selected: status });
+            res.status(200).json({
                 success: true,
-                message: 'photo changed successfully',
-                is_selected: changeto
-            });
+                message: status ? "תמונה הוספה לפיתוח בהצלחה" : "תמונה הוסרה מפיתוח בהצלחה",            })
         } catch (error) {
             return res.status(500).json({
-                message: "error to select photo",
+                message: "error in select photo",
                 error: error.message
-            })
+            });
         }
-    }
+    },
 
 
 }
